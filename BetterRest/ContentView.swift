@@ -37,24 +37,29 @@ struct ContentView: View {
                     Stepper("\(sleepAmount.formatted()) hours", value: $sleepAmount, in: 4...12, step: 0.25)
                 }
                 Section ("Daily coffee intake") {
-                    Stepper(coffeeAmount == 1 ? "1 cup" : "\(coffeeAmount) cups", value: $coffeeAmount, in: 1...20)
+//                    Stepper(coffeeAmount == 1 ? "1 cup" : "\(coffeeAmount) cups", value: $coffeeAmount, in: 1...20)
+                    
+                    Picker(selection: $coffeeAmount) {
+                        ForEach(1..<21, id: \.self) { amount in
+                            Text("\(amount)")
+                        }
+                    } label: {
+                        Text("Daily coffee intake")
+                    }
+                }
+                
+                Section ("Recommended bedtime") {
+                    Text(bedTime)
+                        .font(.title)
+                        .frame(maxWidth: .infinity)
                 }
             }
-            .navigationTitle("Better Rest")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                Button("Calculate", action: calculateBedtime)
-            }
-            .alert(alertTitle, isPresented: $showingAlert) {
-                Button("OK"){}
-            } message: {
-                Text(alertMessage)
-            }
-            
+            .navigationTitle("BetterRest")
+//            .navigationBarTitleDisplayMode(.inline)
         }
     }
     
-    func calculateBedtime() {
+    var bedTime: String {
         do {
             let config = MLModelConfiguration()
             let model = try SleepCalculaor(configuration: config)
@@ -71,16 +76,12 @@ struct ContentView: View {
             let prediction = try model.prediction(wake: Double(wakeUpTimeInSeconds), estimatedSleep: sleepAmount, coffee: Double(coffeeAmount))
             let bedTime = wakeUp - prediction.actualSleep   // Returns a date with a given TimeInterval (typealias for Double representing seconds) subtracted from it.
             
-            // Display bedtime.
-            alertTitle = "Your ideal bedtime is..."
-            alertMessage = bedTime.formatted(date: .omitted, time: .shortened)
+            // Return bedtime as a formatted string.
+            return bedTime.formatted(date: .omitted, time: .shortened)
         } catch {
             // Something went wrong.
-            alertTitle = "Error"
-            alertMessage = "Sorry, there was a problem calculating your bedtime."
+            return "Error"
         }
-        
-        showingAlert = true // Alert message is shown regardless of errors.
     }
 }
 
